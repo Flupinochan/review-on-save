@@ -6,7 +6,8 @@
     "useIgnoreFile": false
   },
   "files": {
-    "ignoreUnknown": false
+    "ignoreUnknown": false,
+    "includes": ["src/**/*"]
   },
   "formatter": {
     "enabled": true,
@@ -40,7 +41,7 @@
   },
   "overrides": [
     {
-      "includes": ["src/**/*.ts", "src/**/*.js"],
+      "includes": ["src/**/*"],
       "linter": {
         "rules": {
           "performance": {
