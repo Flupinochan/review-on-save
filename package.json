@@ -1,0 +1,58 @@
+{
+  "name": "review-on-save",
+  "displayName": "Review On Save",
+  "description": "Generative AI feature that performs code review upon file save",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.103.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "preview.open",
+        "title": "Open Preview",
+        "icon": "$(sparkle)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "preview.open",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile",
+    "check-types": "tsc --noEmit",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.103.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.25.8",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "ollama": "^0.5.17"
+  }
+}
