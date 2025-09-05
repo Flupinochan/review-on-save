@@ -1,5 +1,19 @@
 import * as vscode from "vscode";
 
+/**
+ * HTML (WebView) にJavaScriptの挿入を安全にするため
+ * @returns
+ */
+function getNonce(): string {
+  let text = "";
+  const possible =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < 32; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+}
+
 export function setupPanel(
   existingPanel: vscode.WebviewPanel | undefined,
   context: vscode.ExtensionContext,
@@ -72,18 +86,4 @@ export function setupPanel(
   });
 
   return newPanel;
-}
-
-/**
- * HTML (WebView) にJavaScriptの挿入を安全にするため
- * @returns
- */
-export function getNonce(): string {
-  let text = "";
-  const possible =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 32; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
 }

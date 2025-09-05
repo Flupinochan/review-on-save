@@ -93,7 +93,7 @@ export async function setupOllama(): Promise<boolean> {
 }
 
 /**
- *
+ * Ollamaでチャットする
  * @param fileContent
  * @returns Streaming Response
  */
