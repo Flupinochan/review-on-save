@@ -57,6 +57,7 @@ export class PanelService {
     if (!this.panel) {
       return;
     }
+    console.log("テスト");
 
     // アクティブなファイルが保存された場合
     const activeEditor = vscode.window.activeTextEditor;
@@ -73,6 +74,10 @@ export class PanelService {
         this.reviewModelProvider.getSelectedModel(),
       );
       for await (const content of response) {
+        if (!this.panel) {
+          break;
+        }
+
         accumulatedContent += content;
         this.panel.webview.postMessage({
           command: UPDATE_PANEL_CONTENT,

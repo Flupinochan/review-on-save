@@ -122,24 +122,26 @@ export class OllamaService {
     model: string,
   ): AsyncGenerator<string, void, unknown> {
     if (this.isProcessing) {
+      vscode.window.showWarningMessage("処理中です。しばらくお待ちください。");
       return;
     }
 
-    const models = await this.getAvailableModels();
-    if (!models.includes(model)) {
-      vscode.window.showErrorMessage(
-        `選択された ${model} モデルは利用できません`,
-      );
-      return;
-    }
+    try {
+      const models = await this.getAvailableModels();
+      if (!models.includes(model)) {
+        vscode.window.showErrorMessage(
+          `選択された ${model} モデルは利用できません`,
+        );
+        return;
+      }
 
-    vscode.window.showInformationMessage(`${model} モデルとチャット中...`);
+      vscode.window.showInformationMessage(`${model} モデルとチャット中...`);
 
-    const reviewTargets = this.reviewScopeProvider
-      .getCheckedItems()
-      .map((item) => item.label);
+      const reviewTargets = this.reviewScopeProvider
+        .getCheckedItems()
+        .map((item) => item.label);
 
-    const content = `\`\`\`
+      const content = `\`\`\`
 ${fileContent}
 \`\`\`
 
@@ -151,33 +153,36 @@ ${fileContent}
 問題がある場合は500文字以内で回答し、問題がなければ1行で回答してください。
 日本語で回答してください。`;
 
-    this.isProcessing = true;
-    const response = await ollama.chat({
-      model,
-      messages: [
-        {
-          role: "system",
-          content: "Please output in Markdown format",
-        },
-        {
-          role: "user",
-          content,
-        },
-      ],
-      stream: true,
-      // biome-ignore lint/style/useNamingConvention: <Ollama仕様のため>
-      keep_alive: 0,
-    });
+      this.isProcessing = true;
+      const response = await ollama.chat({
+        model,
+        messages: [
+          {
+            role: "system",
+            content: "Please output in Markdown format",
+          },
+          {
+            role: "user",
+            content,
+          },
+        ],
+        stream: true,
+        // biome-ignore lint/style/useNamingConvention: <Ollama仕様のため>
+        keep_alive: 0,
+      });
 
-    for await (const part of response) {
-      if (part.done) {
-        this.isProcessing = false;
-        vscode.window.showInformationMessage(
-          "Ollamaとのチャットが完了しました",
-        );
-        return;
+      for await (const part of response) {
+        if (part.done) {
+          this.isProcessing = false;
+          vscode.window.showInformationMessage(
+            "Ollamaとのチャットが完了しました",
+          );
+          return;
+        }
+        yield part.message.content;
       }
-      yield part.message.content;
+    } finally {
+      this.isProcessing = false;
     }
   }
 
