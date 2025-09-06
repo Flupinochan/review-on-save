@@ -93,7 +93,7 @@ export class PanelService {
       return;
     }
 
-    // panelを開いたときは、ollamaの起動、modelsの表示を行う
+    // panelを開いたときに、ollamaの起動、modelsの表示を行う
     await this.ollamaService.initialize();
     const models = await this.ollamaService.getAvailableModels();
     this.reviewModelProvider.setupModels(models);
