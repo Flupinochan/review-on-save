@@ -9,18 +9,13 @@ export const MODEL_SETTING = "model";
  */
 export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
   private selected = "";
-  private readonly models: string[];
+  private models: string[] = [];
 
-  constructor(models: string[]) {
-    this.models = models;
-
+  constructor() {
     const config = vscode.workspace.getConfiguration(CONFIG_NAME);
     const defaultModel = config.get<string>(MODEL_SETTING, "");
-
     if (defaultModel !== "") {
       this.selected = defaultModel;
-    } else if (this.models.length > 0) {
-      this.selected = this.models[0];
     }
   }
 
@@ -82,6 +77,18 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
     const config = vscode.workspace.getConfiguration(CONFIG_NAME);
     const target = this.getConfigurationTarget();
     config.update(MODEL_SETTING, model, target);
+    this.refresh();
+  }
+
+  /**
+   * models setter
+   * @param models
+   */
+  setupModels(models: string[]) {
+    this.models = models;
+    if (this.selected === "" && this.models.length > 0) {
+      this.selected = this.models[0];
+    }
     this.refresh();
   }
 

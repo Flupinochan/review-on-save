@@ -130,6 +130,10 @@ export class OllamaService {
       model,
       messages: [
         {
+          role: "system",
+          content: "Please respond in Markdown format",
+        },
+        {
           role: "user",
           content: `${fileContent}について日本語でコードレビューをお願いいたします`,
         },

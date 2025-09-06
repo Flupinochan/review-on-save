@@ -8,19 +8,15 @@ import { ReviewModelProvider } from "./review-model-provider";
  * エントリーポイント
  * @param context
  */
-export async function activate(
-  context: vscode.ExtensionContext,
-): Promise<void> {
-  // Ollama初期化
+export function activate(context: vscode.ExtensionContext): void {
+  // Ollama
   const ollamaService = new OllamaService();
-  await ollamaService.initialize();
-  const models = await ollamaService.getAvailableModels();
 
-  // Model View Container初期化
-  const reviewModelProvider = new ReviewModelProvider(models);
+  // Model View Container
+  const reviewModelProvider = new ReviewModelProvider();
   reviewModelProvider.initialize(context);
 
-  // Panel(Web View)初期化
+  // Panel(Web View)
   const panelService = new PanelService(
     context,
     ollamaService,

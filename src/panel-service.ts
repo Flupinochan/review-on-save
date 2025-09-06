@@ -86,12 +86,17 @@ export class PanelService {
    * Panel初期化処理
    * @returns
    */
-  togglePanel(): vscode.WebviewPanel | undefined {
+  async togglePanel(): Promise<vscode.WebviewPanel | undefined> {
     // panelが開いている場合は閉じるだけ
     if (this.panel) {
       this.panel.dispose();
       return;
     }
+
+    // panelを開いたときは、ollamaの起動、modelsの表示を行う
+    await this.ollamaService.initialize();
+    const models = await this.ollamaService.getAvailableModels();
+    this.reviewModelProvider.setupModels(models);
 
     const newPanel = vscode.window.createWebviewPanel(
       "preview",
