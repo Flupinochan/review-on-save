@@ -98,6 +98,21 @@
           "type": "string",
           "default": "http://localhost:11434",
           "description": "Enter your Ollama API endpoint."
+        },
+        "reviewOnSave.reviewTargets": {
+          "type": "array",
+          "default": [
+            "命名規則",
+            "コメントアウト",
+            "例外処理",
+            "重複コード",
+            "マジックナンバー",
+            "デザインパターン"
+          ],
+          "description": "Review target items list",
+          "items": {
+            "type": "string"
+          }
         }
       }
     }

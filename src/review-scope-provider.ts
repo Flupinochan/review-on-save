@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/suspicious/noConfusingVoidType: <VSCode公式設定のためvoid戻り値を許可> */
 
 import * as vscode from "vscode";
+import { CONFIG_NAME, getConfigurationTarget, SCOPE_SETTING } from "./utils";
 
 /**
  * レビュー対象Item定義
@@ -29,14 +30,11 @@ class ReviewTargetItem extends vscode.TreeItem {
 export class ReviewScopeProvider
   implements vscode.TreeDataProvider<ReviewTargetItem>
 {
-  private readonly reviewTargets: ReviewTargetItem[] = [
-    new ReviewTargetItem("命名規則"),
-    new ReviewTargetItem("コメントアウト"),
-    new ReviewTargetItem("例外処理"),
-    new ReviewTargetItem("重複コード"),
-    new ReviewTargetItem("マジックナンバー"),
-    new ReviewTargetItem("デザインパターン"),
-  ];
+  private readonly reviewTargets: ReviewTargetItem[] = [];
+
+  constructor() {
+    this.reviewTargets = this.loadFromConfiguration();
+  }
 
   /**
    * 初期化処理
@@ -90,6 +88,7 @@ export class ReviewScopeProvider
 
   refresh(): void {
     this._onDidChangeTreeData.fire();
+    this.saveToConfiguration();
   }
 
   getTreeItem(element: ReviewTargetItem): vscode.TreeItem {
@@ -104,6 +103,32 @@ export class ReviewScopeProvider
     return this.reviewTargets.filter((item) => item.isSelected);
   }
 
+  /**
+   * 設定ファイルからのScopeの読み込み
+   */
+  private loadFromConfiguration(): ReviewTargetItem[] {
+    const config = vscode.workspace.getConfiguration(CONFIG_NAME);
+    const savedTargets = config.get<string[]>(SCOPE_SETTING, []);
+    const reviewTargets = savedTargets.map(
+      (label) => new ReviewTargetItem(label),
+    );
+    return reviewTargets;
+  }
+
+  /**
+   * 設定ファイルにScopeを保存
+   */
+  private saveToConfiguration(): void {
+    const config = vscode.workspace.getConfiguration(CONFIG_NAME);
+    const targetLabels = this.reviewTargets.map((item) => item.label);
+    const target = getConfigurationTarget();
+    config.update(SCOPE_SETTING, targetLabels, target);
+  }
+
+  /**
+   * Scopeの削除
+   * @param item
+   */
   private deleteItem(item: ReviewTargetItem): void {
     const index = this.reviewTargets.findIndex(
       (target) => target.label === item.label,
@@ -115,6 +140,9 @@ export class ReviewScopeProvider
     }
   }
 
+  /**
+   * Scopeの追加
+   */
   private async addItem(): Promise<void> {
     const itemName = await vscode.window.showInputBox({
       prompt: "追加する項目名を入力してください",

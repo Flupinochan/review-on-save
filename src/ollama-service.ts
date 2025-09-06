@@ -3,8 +3,8 @@ import process from "node:process";
 import { promisify } from "node:util";
 import ollama from "ollama";
 import * as vscode from "vscode";
-import { CONFIG_NAME } from "./review-model-provider";
 import type { ReviewScopeProvider } from "./review-scope-provider";
+import { CONFIG_NAME } from "./utils";
 
 const OLLAMA_ENDPOINT = "apiEndpoint";
 

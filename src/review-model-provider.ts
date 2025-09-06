@@ -1,8 +1,6 @@
 /** biome-ignore-all lint/suspicious/noConfusingVoidType: <VSCode公式設定のためvoid戻り値を許可> */
 import * as vscode from "vscode";
-
-export const CONFIG_NAME = "reviewOnSave";
-export const MODEL_SETTING = "model";
+import { CONFIG_NAME, getConfigurationTarget, MODEL_SETTING } from "./utils";
 
 /**
  * Ollamaで扱うModelを選択するView Container設定クラス
@@ -75,7 +73,7 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
   selectModel(model: string): void {
     this.selected = model;
     const config = vscode.workspace.getConfiguration(CONFIG_NAME);
-    const target = this.getConfigurationTarget();
+    const target = getConfigurationTarget();
     config.update(MODEL_SETTING, model, target);
     this.refresh();
   }
@@ -113,29 +111,5 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
     );
 
     context.subscriptions.push(treeView, radioCommand);
-  }
-
-  /**
-   * 設定保存場所を取得
-   * デフォルトでGlobal
-   * @returns
-   */
-  private getConfigurationTarget(): vscode.ConfigurationTarget {
-    const config = vscode.workspace.getConfiguration(CONFIG_NAME);
-    const inspection = config.inspect<string>(MODEL_SETTING);
-
-    if (inspection) {
-      if (inspection.workspaceValue !== undefined) {
-        return vscode.ConfigurationTarget.Workspace;
-      }
-
-      if (inspection.workspaceFolderValue !== undefined) {
-        return vscode.ConfigurationTarget.WorkspaceFolder;
-      }
-
-      return vscode.ConfigurationTarget.Global;
-    }
-
-    return vscode.ConfigurationTarget.Global;
   }
 }
