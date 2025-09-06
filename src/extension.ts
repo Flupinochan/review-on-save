@@ -1,10 +1,47 @@
 import * as vscode from "vscode";
-import { chatOllama, setupOllama } from "./ollama-service";
+import { OllamaService } from "./ollama-service";
 import { setupPanel } from "./panel-service";
+import { ReviewModelProvider } from "./review-model-provider";
 
 let Panel: vscode.WebviewPanel | undefined;
 
-export function activate(context: vscode.ExtensionContext): void {
+/**
+ * Model選択一覧初期化
+ * @param reviewModelProvider
+ * @returns
+ */
+function setupModelView(
+  reviewModelProvider: ReviewModelProvider,
+): vscode.Disposable {
+  vscode.window.createTreeView("review-model", {
+    treeDataProvider: reviewModelProvider,
+    canSelectMany: false,
+    showCollapseAll: false,
+  });
+
+  const radioSelectDisposable = vscode.commands.registerCommand(
+    "radio.select",
+    (model: string) => {
+      reviewModelProvider.selectModel(model);
+    },
+  );
+  return radioSelectDisposable;
+}
+
+/**
+ * 拡張機能アクティベート時初期化処理
+ * @param context
+ */
+export async function activate(
+  context: vscode.ExtensionContext,
+): Promise<void> {
+  const ollamaService = new OllamaService();
+  const models = await ollamaService.getAvailableModels();
+  const reviewModelProvider = new ReviewModelProvider(models);
+
+  const radioSelectDisposable = setupModelView(reviewModelProvider);
+  context.subscriptions.push(radioSelectDisposable);
+
   // menu title buttonクリック時のイベントトリガー
   // 1. panelを開いてOllamaを起動
   // 2. panelが開いていれば閉じる
@@ -18,7 +55,7 @@ export function activate(context: vscode.ExtensionContext): void {
         return;
       }
 
-      const ollamaEnabled = await setupOllama();
+      const ollamaEnabled = await ollamaService.setupOllama();
       if (!ollamaEnabled) {
         return;
       }
@@ -41,7 +78,10 @@ export function activate(context: vscode.ExtensionContext): void {
         Panel.webview.postMessage({ command: "clearContent" });
 
         let accumulatedContent = "";
-        const response = chatOllama(fileContent);
+        const response = ollamaService.chatOllama(
+          fileContent,
+          reviewModelProvider.getSelectedModel(),
+        );
         for await (const content of response) {
           accumulatedContent += content;
           Panel.webview.postMessage({

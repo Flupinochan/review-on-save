@@ -24,6 +24,10 @@
         "command": "preview.open",
         "title": "Open Preview",
         "icon": "$(sparkle)"
+      },
+      {
+        "command": "radio.select",
+        "title": "Select Model"
       }
     ],
     "menus": {
@@ -33,6 +37,45 @@
           "group": "navigation"
         }
       ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "review-on-save",
+          "title": "Review On Save",
+          "icon": "$(sparkle)",
+          "when": "true"
+        }
+      ]
+    },
+    "views": {
+      "review-on-save": [
+        {
+          "id": "review-scope",
+          "name": "Review Scope",
+          "icon": "$(sparkle)"
+        },
+        {
+          "id": "review-model",
+          "name": "Model",
+          "icon": "$(sparkle)"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Review On Save Settings",
+      "properties": {
+        "reviewOnSave.model": {
+          "type": "string",
+          "default": "",
+          "description": "Select the model to use for code review."
+        },
+        "reviewOnSave.apiEndpoint": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Enter your Ollama API endpoint."
+        }
+      }
     }
   },
   "scripts": {
