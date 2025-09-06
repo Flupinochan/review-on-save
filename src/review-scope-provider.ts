@@ -31,13 +31,11 @@ export class ReviewScopeProvider
 {
   private readonly reviewTargets: ReviewTargetItem[] = [
     new ReviewTargetItem("命名規則"),
-    new ReviewTargetItem("コメントの品質"),
-    new ReviewTargetItem("重複コードの有無"),
-    new ReviewTargetItem("マジックナンバーの使用"),
-    new ReviewTargetItem("デザインパターンの適切な使用"),
+    new ReviewTargetItem("コメントアウト"),
     new ReviewTargetItem("例外処理"),
-    new ReviewTargetItem("SOLID原則の尊守"),
-    new ReviewTargetItem("疎結合・依存関係の管理"),
+    new ReviewTargetItem("重複コード"),
+    new ReviewTargetItem("マジックナンバー"),
+    new ReviewTargetItem("デザインパターン"),
   ];
 
   /**

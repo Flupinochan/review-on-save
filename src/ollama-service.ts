@@ -40,8 +40,8 @@ export class OllamaService {
         throw new Error("Ollama is not started");
       }
       return true;
-    } catch (error) {
-      vscode.window.showErrorMessage(`Ollamaが起動していません\n${error}`);
+    } catch (_error) {
+      vscode.window.showErrorMessage("Ollamaが起動していません");
       return false;
     }
   }
@@ -60,9 +60,10 @@ export class OllamaService {
           : `which ${ollamaCommand}`;
       await this.execAsync(checkCommand);
       return true;
-    } catch (error) {
+    } catch (_error) {
+      vscode.window.showErrorMessage("Ollamaがインストールされていません");
       vscode.window.showErrorMessage(
-        `Ollamaがインストールされていません\n${error}`,
+        `${this.ollamaDownloadUrl} からOllamaをインストールしてください`,
       );
       return false;
     }
@@ -91,9 +92,6 @@ export class OllamaService {
 
     const isOllamaInstalled = await this.checkOllamaInstalled();
     if (!isOllamaInstalled) {
-      vscode.window.showErrorMessage(
-        `Ollamaがインストールされていません\n${this.ollamaDownloadUrl} からOllamaをインストールしてください`,
-      );
       return false;
     }
 
@@ -127,7 +125,15 @@ export class OllamaService {
       return;
     }
 
-    vscode.window.showInformationMessage("Ollamaとチャット中...");
+    const models = await this.getAvailableModels();
+    if (!models.includes(model)) {
+      vscode.window.showErrorMessage(
+        `選択された ${model} モデルは利用できません`,
+      );
+      return;
+    }
+
+    vscode.window.showInformationMessage(`${model} モデルとチャット中...`);
 
     const reviewTargets = this.reviewScopeProvider
       .getCheckedItems()
