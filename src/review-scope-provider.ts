@@ -61,7 +61,23 @@ export class ReviewScopeProvider
       }
     });
 
-    context.subscriptions.push(treeView);
+    // 削除コマンドの登録
+    const deleteCommand = vscode.commands.registerCommand(
+      "delete.scope",
+      (item: ReviewTargetItem) => {
+        this.deleteItem(item);
+      },
+    );
+
+    // 追加コマンドの登録
+    const addCommand = vscode.commands.registerCommand(
+      "add.scope",
+      async () => {
+        await this.addItem();
+      },
+    );
+
+    context.subscriptions.push(treeView, deleteCommand, addCommand);
   }
 
   private readonly _onDidChangeTreeData: vscode.EventEmitter<
@@ -86,5 +102,42 @@ export class ReviewScopeProvider
 
   getCheckedItems(): ReviewTargetItem[] {
     return this.reviewTargets.filter((item) => item.isSelected);
+  }
+
+  private deleteItem(item: ReviewTargetItem): void {
+    const index = this.reviewTargets.findIndex(
+      (target) => target.label === item.label,
+    );
+    if (index !== -1) {
+      this.reviewTargets.splice(index, 1);
+      this.refresh();
+      vscode.window.showInformationMessage(`${item.label} を削除しました`);
+    }
+  }
+
+  private async addItem(): Promise<void> {
+    const itemName = await vscode.window.showInputBox({
+      prompt: "追加する項目名を入力してください",
+      placeHolder: "例: セキュリティチェック",
+      validateInput: (value) => {
+        if (!value?.trim()) {
+          return "項目名を入力してください";
+        }
+
+        if (this.reviewTargets.some((item) => item.label === value.trim())) {
+          return "すでに存在する項目名です";
+        }
+
+        return null;
+      },
+    });
+
+    if (itemName?.trim()) {
+      const trimmedName = itemName.trim();
+      const newItem = new ReviewTargetItem(trimmedName);
+      this.reviewTargets.push(newItem);
+      this.refresh();
+      vscode.window.showInformationMessage(`${trimmedName} を追加しました`);
+    }
   }
 }

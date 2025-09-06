@@ -26,12 +26,18 @@
         "icon": "$(sparkle)"
       },
       {
-        "command": "radio.select",
+        "command": "model.select",
         "title": "Select Model"
       },
       {
-        "command": "checkbox.toggle",
-        "title": "Select Scope"
+        "command": "add.scope",
+        "title": "Add Scope",
+        "icon": "$(add)"
+      },
+      {
+        "command": "delete.scope",
+        "title": "Delete Scope",
+        "icon": "$(trash)"
       }
     ],
     "menus": {
@@ -39,6 +45,20 @@
         {
           "command": "preview.button",
           "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "add.scope",
+          "when": "view == review-scope",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "delete.scope",
+          "when": "view == review-scope",
+          "group": "inline"
         }
       ]
     },

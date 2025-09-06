@@ -54,7 +54,7 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
     );
     item.command = {
       title: "Select Model",
-      command: "radio.select",
+      command: "model.select",
       arguments: [element],
     };
     return item;
@@ -69,7 +69,7 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
   }
 
   /**
-   * "command": "radio.select" で呼び出されるRadioButton選択時の処理
+   * "command": "model.select" で呼び出されるRadioButton選択時の処理
    * @param model
    */
   selectModel(model: string): void {
@@ -106,7 +106,7 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
 
     // radio button設定
     const radioCommand = vscode.commands.registerCommand(
-      "radio.select",
+      "model.select",
       (model: string) => {
         this.selectModel(model);
       },
