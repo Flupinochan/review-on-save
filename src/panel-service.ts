@@ -32,8 +32,8 @@ export class PanelService {
     // preview.buttonコマンドの登録
     const panelCommand = vscode.commands.registerCommand(
       "preview.button",
-      () => {
-        this.togglePanel();
+      async () => {
+        await this.togglePanel();
       },
     );
 

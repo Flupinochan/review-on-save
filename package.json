@@ -28,6 +28,10 @@
       {
         "command": "radio.select",
         "title": "Select Model"
+      },
+      {
+        "command": "checkbox.toggle",
+        "title": "Select Scope"
       }
     ],
     "menus": {

@@ -55,7 +55,8 @@
           "nursery": {
             "noUnnecessaryConditions": "off",
             "noUnresolvedImports": "off",
-            "useExplicitType": "off"
+            "useExplicitType": "off",
+            "noSecrets": "off"
           }
         }
       }

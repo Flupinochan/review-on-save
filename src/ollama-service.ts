@@ -4,6 +4,7 @@ import { promisify } from "node:util";
 import ollama from "ollama";
 import * as vscode from "vscode";
 import { CONFIG_NAME } from "./review-model-provider";
+import type { ReviewScopeProvider } from "./review-scope-provider";
 
 const OLLAMA_ENDPOINT = "apiEndpoint";
 
@@ -11,12 +12,15 @@ const OLLAMA_ENDPOINT = "apiEndpoint";
  * Ollamaに関する機能を定義
  */
 export class OllamaService {
+  private readonly reviewScopeProvider: ReviewScopeProvider;
   private readonly execAsync = promisify(exec);
   private readonly ollamaEndpoint: string;
   private readonly ollamaDownloadUrl = "https://ollama.com/download";
   private isProcessing = false;
 
-  constructor() {
+  constructor(reviewScopeProvider: ReviewScopeProvider) {
+    this.reviewScopeProvider = reviewScopeProvider;
+
     // Workspace等のConfigurationの設定取得
     const config = vscode.workspace.getConfiguration(CONFIG_NAME);
     this.ollamaEndpoint = config.get<string>(
@@ -125,20 +129,38 @@ export class OllamaService {
 
     vscode.window.showInformationMessage("Ollamaとチャット中...");
 
+    const reviewTargets = this.reviewScopeProvider
+      .getCheckedItems()
+      .map((item) => item.label);
+
+    const content = `\`\`\`
+${fileContent}
+\`\`\`
+
+あなたは経験豊富なソフトウェアエンジニアです。
+上記コードを${reviewTargets.join("、")}の観点からコードに問題があるかどうかレビューしてください。
+観点以外について問題があったとしてもレビューは不要で余計な回答はさけてください。
+必要に応じてコード修正例を出力してください。
+回答が冗長にならないように気を付けてください。
+問題がある場合は500文字以内で回答し、問題がなければ1行で回答してください。
+日本語で回答してください。`;
+
     this.isProcessing = true;
     const response = await ollama.chat({
       model,
       messages: [
         {
           role: "system",
-          content: "Please respond in Markdown format",
+          content: "Please output in Markdown format",
         },
         {
           role: "user",
-          content: `${fileContent}について日本語でコードレビューをお願いいたします`,
+          content,
         },
       ],
       stream: true,
+      // biome-ignore lint/style/useNamingConvention: <Ollama仕様のため>
+      keep_alive: 0,
     });
 
     for await (const part of response) {

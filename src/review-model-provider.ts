@@ -112,8 +112,7 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
       },
     );
 
-    context.subscriptions.push(treeView);
-    context.subscriptions.push(radioCommand);
+    context.subscriptions.push(treeView, radioCommand);
   }
 
   /**
