@@ -4,6 +4,9 @@ import * as vscode from "vscode";
 export const CONFIG_NAME = "reviewOnSave";
 export const MODEL_SETTING = "model";
 
+/**
+ * Ollamaで扱うModelを選択するView Container設定クラス
+ */
 export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
   private selected = "";
   private readonly models: string[];
@@ -45,7 +48,7 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
   }
 
   /**
-   * Itemごとの表示・動作を設定
+   * Item (Model) ごとの表示・動作を設定
    * @param element
    * @returns
    */
@@ -63,7 +66,7 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
   }
 
   /**
-   * List
+   *
    * @returns
    */
   getChildren(): Thenable<string[]> {
@@ -83,7 +86,31 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
   }
 
   /**
-   * 設定保存場所を判定
+   * 初期化処理
+   * @param context
+   */
+  initialize(context: vscode.ExtensionContext) {
+    // view container作成
+    const treeView = vscode.window.createTreeView("review-model", {
+      treeDataProvider: this,
+      canSelectMany: false,
+      showCollapseAll: false,
+    });
+
+    // radio button設定
+    const radioCommand = vscode.commands.registerCommand(
+      "radio.select",
+      (model: string) => {
+        this.selectModel(model);
+      },
+    );
+
+    context.subscriptions.push(treeView);
+    context.subscriptions.push(radioCommand);
+  }
+
+  /**
+   * 設定保存場所を取得
    * デフォルトでGlobal
    * @returns
    */

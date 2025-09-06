@@ -1,51 +1,123 @@
 import * as vscode from "vscode";
+import type { OllamaService } from "./ollama-service";
+import type { ReviewModelProvider } from "./review-model-provider";
+import { getNonce } from "./utils";
+
+const CLEAR_PANEL_CONTENT = "clearPanelContent";
+const UPDATE_PANEL_CONTENT = "updatePanelContent";
 
 /**
- * HTML (WebView) にJavaScriptの挿入を安全にするため
- * @returns
+ * Panel (Web View) を表示するクラス
  */
-function getNonce(): string {
-  let text = "";
-  const possible =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 32; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
-}
+export class PanelService {
+  private panel: vscode.WebviewPanel | undefined;
+  private readonly context: vscode.ExtensionContext;
+  private readonly ollamaService: OllamaService;
+  private readonly reviewModelProvider: ReviewModelProvider;
 
-export function setupPanel(
-  existingPanel: vscode.WebviewPanel | undefined,
-  context: vscode.ExtensionContext,
-  onDispose: () => void,
-): vscode.WebviewPanel | undefined {
-  if (existingPanel) {
-    existingPanel.dispose();
-    return;
+  constructor(
+    context: vscode.ExtensionContext,
+    ollamaService: OllamaService,
+    reviewModelProvider: ReviewModelProvider,
+  ) {
+    this.context = context;
+    this.ollamaService = ollamaService;
+    this.reviewModelProvider = reviewModelProvider;
   }
 
-  const newPanel = vscode.window.createWebviewPanel(
-    "preview",
-    "Preview",
-    vscode.ViewColumn.Beside,
-    {
-      enableScripts: true,
-      localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, "media")],
-    },
-  );
+  /**
+   * 初期化処理
+   */
+  initialize(): void {
+    // preview.buttonコマンドの登録
+    const panelCommand = vscode.commands.registerCommand(
+      "preview.button",
+      () => {
+        this.togglePanel();
+      },
+    );
 
-  const markedJsUri = newPanel.webview.asWebviewUri(
-    vscode.Uri.joinPath(context.extensionUri, "media", "marked.min.js"),
-  );
-  const prismCssUri = newPanel.webview.asWebviewUri(
-    vscode.Uri.joinPath(context.extensionUri, "media", "prism.css"),
-  );
-  const prismJsUri = newPanel.webview.asWebviewUri(
-    vscode.Uri.joinPath(context.extensionUri, "media", "prism.js"),
-  );
-  const nonce = getNonce();
+    // ファイル保存時のイベントリスナー登録
+    const saveFileDocument = vscode.workspace.onDidSaveTextDocument(
+      async (document: vscode.TextDocument) => {
+        await this.fileSave(document);
+      },
+    );
 
-  newPanel.webview.html = `<!DOCTYPE html>
+    this.context.subscriptions.push(panelCommand);
+    this.context.subscriptions.push(saveFileDocument);
+  }
+
+  /**
+   * ファイル保存時の処理
+   * @param document
+   * @returns
+   */
+  private async fileSave(document: vscode.TextDocument): Promise<void> {
+    if (!this.panel) {
+      return;
+    }
+
+    // アクティブなファイルが保存された場合
+    const activeEditor = vscode.window.activeTextEditor;
+    if (activeEditor && activeEditor.document === document) {
+      const fileContent = document.getText();
+
+      // panelをクリア
+      this.panel.webview.postMessage({ command: CLEAR_PANEL_CONTENT });
+
+      // ollamaでレビューを生成
+      let accumulatedContent = "";
+      const response = this.ollamaService.chatOllama(
+        fileContent,
+        this.reviewModelProvider.getSelectedModel(),
+      );
+      for await (const content of response) {
+        accumulatedContent += content;
+        this.panel.webview.postMessage({
+          command: UPDATE_PANEL_CONTENT,
+          content: accumulatedContent,
+        });
+      }
+    }
+  }
+
+  /**
+   * Panel初期化処理
+   * @returns
+   */
+  togglePanel(): vscode.WebviewPanel | undefined {
+    // panelが開いている場合は閉じるだけ
+    if (this.panel) {
+      this.panel.dispose();
+      return;
+    }
+
+    const newPanel = vscode.window.createWebviewPanel(
+      "preview",
+      "Preview",
+      vscode.ViewColumn.Beside,
+      {
+        enableScripts: true,
+        localResourceRoots: [
+          vscode.Uri.joinPath(this.context.extensionUri, "media"),
+        ],
+      },
+    );
+
+    const markedJsUri = newPanel.webview.asWebviewUri(
+      vscode.Uri.joinPath(this.context.extensionUri, "media", "marked.min.js"),
+    );
+    const prismCssUri = newPanel.webview.asWebviewUri(
+      vscode.Uri.joinPath(this.context.extensionUri, "media", "prism.css"),
+    );
+    const prismJsUri = newPanel.webview.asWebviewUri(
+      vscode.Uri.joinPath(this.context.extensionUri, "media", "prism.js"),
+    );
+
+    const nonce = getNonce();
+
+    newPanel.webview.html = `<!DOCTYPE html>
 <html lang="jp">
 <head>
     <meta charset="UTF-8">
@@ -68,11 +140,11 @@ export function setupPanel(
         window.addEventListener('message', event => {
           const { command, content } = event.data;
           switch (command) {
-              case 'updateContent':
+              case "${UPDATE_PANEL_CONTENT}":
                   output.innerHTML = marked.parse(content);
                   Prism.highlightAll();
                   break;
-              case 'clearContent':
+              case "${CLEAR_PANEL_CONTENT}":
                   output.innerHTML = '';
                   break;
           }
@@ -81,9 +153,10 @@ export function setupPanel(
 </body>
 </html>`;
 
-  newPanel.onDidDispose(() => {
-    onDispose();
-  });
+    newPanel.onDidDispose(() => {
+      this.panel = undefined;
+    });
 
-  return newPanel;
+    this.panel = newPanel;
+  }
 }

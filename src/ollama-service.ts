@@ -7,6 +7,9 @@ import { CONFIG_NAME } from "./review-model-provider";
 
 const OLLAMA_ENDPOINT = "apiEndpoint";
 
+/**
+ * Ollamaに関する機能を定義
+ */
 export class OllamaService {
   private readonly execAsync = promisify(exec);
   private readonly ollamaEndpoint: string;
@@ -14,7 +17,7 @@ export class OllamaService {
   private isProcessing = false;
 
   constructor() {
-    // Workspace Configurationの設定
+    // Workspace等のConfigurationの設定取得
     const config = vscode.workspace.getConfiguration(CONFIG_NAME);
     this.ollamaEndpoint = config.get<string>(
       OLLAMA_ENDPOINT,
@@ -33,8 +36,8 @@ export class OllamaService {
         throw new Error("Ollama is not started");
       }
       return true;
-    } catch (_error) {
-      vscode.window.showErrorMessage("Ollamaが起動していません");
+    } catch (error) {
+      vscode.window.showErrorMessage(`Ollamaが起動していません\n${error}`);
       return false;
     }
   }
@@ -53,8 +56,10 @@ export class OllamaService {
           : `which ${ollamaCommand}`;
       await this.execAsync(checkCommand);
       return true;
-    } catch (_error) {
-      vscode.window.showErrorMessage("Ollamaがインストールされていません");
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        `Ollamaがインストールされていません\n${error}`,
+      );
       return false;
     }
   }
@@ -70,10 +75,10 @@ export class OllamaService {
   }
 
   /**
-   * useCase: Ollamaを利用可能状態にする
+   * 初期化処理 (Ollamaを利用可能状態にする)
    * @returns
    */
-  async setupOllama(): Promise<boolean> {
+  async initialize(): Promise<boolean> {
     const isOllamaStarted = await this.checkOllamaStarted();
     if (isOllamaStarted) {
       vscode.window.showInformationMessage("Ollamaが起動済みです");
@@ -89,7 +94,7 @@ export class OllamaService {
     }
 
     vscode.window.showInformationMessage("Ollamaを起動中...");
-    await this.startOllama();
+    this.startOllama();
 
     return new Promise((resolve) => {
       setTimeout(async () => {

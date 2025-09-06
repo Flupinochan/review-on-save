@@ -21,7 +21,7 @@
   "contributes": {
     "commands": [
       {
-        "command": "preview.open",
+        "command": "preview.button",
         "title": "Open Preview",
         "icon": "$(sparkle)"
       },
@@ -33,7 +33,7 @@
     "menus": {
       "editor/title": [
         {
-          "command": "preview.open",
+          "command": "preview.button",
           "group": "navigation"
         }
       ]
