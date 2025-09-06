@@ -102,16 +102,42 @@
         "reviewOnSave.reviewTargets": {
           "type": "array",
           "default": [
-            "命名規則",
-            "コメントアウト",
-            "例外処理",
-            "重複コード",
-            "マジックナンバー",
-            "デザインパターン"
+            {
+              "label": "命名規則",
+              "isSelected": true
+            },
+            {
+              "label": "コメントアウト",
+              "isSelected": true
+            },
+            {
+              "label": "例外処理",
+              "isSelected": true
+            },
+            {
+              "label": "重複コード",
+              "isSelected": true
+            },
+            {
+              "label": "マジックナンバー",
+              "isSelected": true
+            }
           ],
           "description": "Review target items list",
           "items": {
-            "type": "string"
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "isSelected": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "label",
+              "isSelected"
+            ]
           }
         }
       }

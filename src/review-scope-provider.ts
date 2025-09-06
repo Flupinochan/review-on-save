@@ -6,6 +6,11 @@ import { CONFIG_NAME, getConfigurationTarget, SCOPE_SETTING } from "./utils";
 /**
  * レビュー対象Item定義
  */
+interface ReviewTargetConfig {
+  label: string;
+  isSelected: boolean;
+}
+
 class ReviewTargetItem extends vscode.TreeItem {
   // 表示名
   readonly label: string;
@@ -57,6 +62,7 @@ export class ReviewScopeProvider
             checkboxState === vscode.TreeItemCheckboxState.Checked;
         }
       }
+      this.refresh();
     });
 
     // 削除コマンドの登録
@@ -108,11 +114,10 @@ export class ReviewScopeProvider
    */
   private loadFromConfiguration(): ReviewTargetItem[] {
     const config = vscode.workspace.getConfiguration(CONFIG_NAME);
-    const savedTargets = config.get<string[]>(SCOPE_SETTING, []);
-    const reviewTargets = savedTargets.map(
-      (label) => new ReviewTargetItem(label),
+    const savedTargets = config.get<ReviewTargetConfig[]>(SCOPE_SETTING, []);
+    return savedTargets.map(
+      (config) => new ReviewTargetItem(config.label, config.isSelected),
     );
-    return reviewTargets;
   }
 
   /**
@@ -120,9 +125,14 @@ export class ReviewScopeProvider
    */
   private saveToConfiguration(): void {
     const config = vscode.workspace.getConfiguration(CONFIG_NAME);
-    const targetLabels = this.reviewTargets.map((item) => item.label);
+    const targetConfigs: ReviewTargetConfig[] = this.reviewTargets.map(
+      (item) => ({
+        label: item.label,
+        isSelected: item.isSelected,
+      }),
+    );
     const target = getConfigurationTarget();
-    config.update(SCOPE_SETTING, targetLabels, target);
+    config.update(SCOPE_SETTING, targetConfigs, target);
   }
 
   /**
@@ -162,7 +172,7 @@ export class ReviewScopeProvider
 
     if (itemName?.trim()) {
       const trimmedName = itemName.trim();
-      const newItem = new ReviewTargetItem(trimmedName);
+      const newItem = new ReviewTargetItem(trimmedName, true);
       this.reviewTargets.push(newItem);
       this.refresh();
       vscode.window.showInformationMessage(`${trimmedName} を追加しました`);
