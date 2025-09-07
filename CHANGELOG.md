@@ -1,7 +1,6 @@
 # Change Log
 
-In Development...
+## [0.0.3] - 2024-09-07
 
-## [Unreleased]
-
-- Initial release
+### Added
+- GitHub Copilot support as alternative AI provider
