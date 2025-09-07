@@ -26,17 +26,17 @@
   "contributes": {
     "commands": [
       {
-        "command": "preview.button",
-        "title": "Open Preview",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "model.select",
+        "command": "select.model",
         "title": "Select Model"
       },
       {
-        "command": "service.select",
+        "command": "select.service",
         "title": "Select Service"
+      },
+      {
+        "command": "preview.panel",
+        "title": "Open Preview",
+        "icon": "$(sparkle)"
       },
       {
         "command": "add.scope",
@@ -52,21 +52,21 @@
     "menus": {
       "editor/title": [
         {
-          "command": "preview.button",
+          "command": "preview.panel",
           "group": "navigation"
         }
       ],
       "view/title": [
         {
           "command": "add.scope",
-          "when": "view == review-scope",
+          "when": "view == scopes-view",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
           "command": "delete.scope",
-          "when": "view == review-scope",
+          "when": "view == scopes-view",
           "group": "inline"
         }
       ]
@@ -84,18 +84,18 @@
     "views": {
       "review-on-save": [
         {
-          "id": "review-scope",
-          "name": "Review Scope",
+          "id": "scopes-view",
+          "name": "Scopes",
           "icon": "$(sparkle)"
         },
         {
-          "id": "review-model",
-          "name": "Model",
+          "id": "models-view",
+          "name": "Models",
           "icon": "$(sparkle)"
         },
         {
-          "id": "review-service",
-          "name": "Service",
+          "id": "services-view",
+          "name": "Services",
           "icon": "$(sparkle)"
         }
       ]
@@ -108,7 +108,7 @@
           "default": "",
           "description": "Select the model to use for code review."
         },
-        "reviewOnSave.apiEndpoint": {
+        "reviewOnSave.ollamaEndpoint": {
           "type": "string",
           "default": "http://localhost:11434",
           "description": "Enter your Ollama API endpoint."
@@ -126,7 +126,7 @@
           "default": "copilot",
           "description": "Select the AI service to use for code review"
         },
-        "reviewOnSave.reviewTargets": {
+        "reviewOnSave.scopes": {
           "type": "array",
           "default": [
             {

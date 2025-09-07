@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import type { AiServiceFactory } from "./ai-service/ai-service-factory";
-import { getNonce } from "./utils";
+import { getNonce, PREVIEW_COMMAND } from "./utils";
 import type { ReviewModelProvider } from "./view-container/review-model-provider";
 
 const CLEAR_PANEL_CONTENT = "clearPanelContent";
@@ -29,9 +29,9 @@ export class PanelService {
    * 初期化処理
    */
   initialize(): void {
-    // preview.buttonコマンドの登録
+    // preview.panelコマンドの登録
     const panelCommand = vscode.commands.registerCommand(
-      "preview.button",
+      PREVIEW_COMMAND,
       async () => {
         await this.togglePanel();
       },
@@ -139,7 +139,7 @@ export class PanelService {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${newPanel.webview.cspSource}; img-src ${newPanel.webview.cspSource} https:; script-src 'nonce-${nonce}';">
-    <title>Cat Coding</title>
+    <title>Code Review</title>
     <link rel="stylesheet" href="${prismCssUri}">
 
 </head>

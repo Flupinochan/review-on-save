@@ -3,11 +3,9 @@ import process from "node:process";
 import { promisify } from "node:util";
 import ollama from "ollama";
 import * as vscode from "vscode";
-import { CONFIG_NAME } from "../utils";
+import { CONFIG_NAME, OLLAMA_ENDPOINT } from "../utils";
 import type { ReviewScopeProvider } from "../view-container/review-scope-provider";
 import type { AiServiceInterface } from "./ai-service-interface";
-
-const OLLAMA_ENDPOINT = "apiEndpoint";
 
 /**
  * Ollamaに関する機能を定義

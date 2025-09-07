@@ -4,7 +4,13 @@ import type {
   AiServiceFactory,
   AiServiceType,
 } from "../ai-service/ai-service-factory";
-import { CONFIG_NAME, getConfigurationTarget, SERVICE_SETTING } from "../utils";
+import {
+  CONFIG_NAME,
+  DEFAULT_SERVICE_TYPE,
+  getConfigurationTarget,
+  SELECT_SERVICE_COMMAND,
+  SERVICES_VIEW_ID,
+} from "../utils";
 import type { ReviewModelProvider } from "./review-model-provider";
 
 export class ReviewServiceProvider
@@ -24,7 +30,7 @@ export class ReviewServiceProvider
 
     const config = vscode.workspace.getConfiguration(CONFIG_NAME);
     const defaultService = config.get<AiServiceType>(
-      SERVICE_SETTING,
+      DEFAULT_SERVICE_TYPE,
       "copilot",
     );
     if (defaultService) {
@@ -55,7 +61,7 @@ export class ReviewServiceProvider
     );
     item.command = {
       title: "Select Service",
-      command: "service.select",
+      command: SELECT_SERVICE_COMMAND,
       arguments: [element],
     };
     return item;
@@ -69,7 +75,7 @@ export class ReviewServiceProvider
     this.selected = service;
     const config = vscode.workspace.getConfiguration(CONFIG_NAME);
     const target = getConfigurationTarget();
-    config.update(SERVICE_SETTING, service, target);
+    config.update(DEFAULT_SERVICE_TYPE, service, target);
 
     // 選択したサービスに合わせてAiServiceを切り替え
     this.aiServiceFactory.switchAiService(this.selected);
@@ -92,7 +98,7 @@ export class ReviewServiceProvider
 
   initialize(context: vscode.ExtensionContext) {
     // view container作成
-    const treeView = vscode.window.createTreeView("review-service", {
+    const treeView = vscode.window.createTreeView(SERVICES_VIEW_ID, {
       treeDataProvider: this,
       canSelectMany: false,
       showCollapseAll: false,
@@ -100,7 +106,7 @@ export class ReviewServiceProvider
 
     // radio button設定
     const radioCommand = vscode.commands.registerCommand(
-      "service.select",
+      SELECT_SERVICE_COMMAND,
       async (service: AiServiceType) => {
         await this.selectService(service);
       },

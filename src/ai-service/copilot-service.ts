@@ -7,11 +7,13 @@ type ProviderId = "github" | "microsoft";
 export class CopilotService implements AiServiceInterface {
   private readonly reviewScopeProvider: ReviewScopeProvider;
   private readonly providerId: ProviderId;
+  private readonly extentionId: string;
   private isProcessing = false;
 
   constructor(reviewScopeProvider: ReviewScopeProvider) {
     this.reviewScopeProvider = reviewScopeProvider;
     this.providerId = "github";
+    this.extentionId = "github.copilot";
   }
 
   /**
@@ -142,14 +144,13 @@ ${fileContent}
    * @returns
    */
   private async checkCopilotExtension(): Promise<boolean> {
-    const extensionId = "github.copilot";
-    const extension = vscode.extensions.getExtension(extensionId);
+    const extension = vscode.extensions.getExtension(this.extentionId);
 
     if (!extension) {
       vscode.window.showErrorMessage(
         "GitHub Copilot拡張機能がインストールされていません。インストールをしてください",
       );
-      await vscode.commands.executeCommand("extension.open", extensionId);
+      await vscode.commands.executeCommand("extension.open", this.extentionId);
       return false;
     }
 
