@@ -2,7 +2,7 @@
   "name": "review-on-save",
   "displayName": "Review On Save",
   "description": "Generative AI feature that performs code review upon file save",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "metalmental",
   "icon": "img/icon.png",
   "repository": {

@@ -32,7 +32,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // Panel (Web View)
   const panelService = new PanelService(
     context,
-    aiServiceFactory.getAiService(),
+    aiServiceFactory,
     reviewModelProvider,
   );
   panelService.initialize();

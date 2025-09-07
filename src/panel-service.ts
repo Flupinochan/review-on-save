@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import type { AiServiceInterface } from "./ai-service/ai-service-interface";
+import type { AiServiceFactory } from "./ai-service/ai-service-factory";
 import { getNonce } from "./utils";
 import type { ReviewModelProvider } from "./view-container/review-model-provider";
 
@@ -12,16 +12,16 @@ const UPDATE_PANEL_CONTENT = "updatePanelContent";
 export class PanelService {
   private panel: vscode.WebviewPanel | undefined;
   private readonly context: vscode.ExtensionContext;
-  private readonly aiService: AiServiceInterface;
+  private readonly aiServiceFactory: AiServiceFactory;
   private readonly reviewModelProvider: ReviewModelProvider;
 
   constructor(
     context: vscode.ExtensionContext,
-    aiService: AiServiceInterface,
+    aiServiceFactory: AiServiceFactory,
     reviewModelProvider: ReviewModelProvider,
   ) {
     this.context = context;
-    this.aiService = aiService;
+    this.aiServiceFactory = aiServiceFactory;
     this.reviewModelProvider = reviewModelProvider;
   }
 
@@ -68,7 +68,8 @@ export class PanelService {
 
       let accumulatedContent = "";
 
-      const response = this.aiService.chat(
+      const aiService = this.aiServiceFactory.getAiService();
+      const response = aiService.chat(
         fileContent,
         this.reviewModelProvider.getSelectedModel(),
       );
@@ -92,13 +93,14 @@ export class PanelService {
    * @returns
    */
   async togglePanel(): Promise<vscode.WebviewPanel | undefined> {
-    const isAiServiceAvailable = await this.aiService.initialize();
+    const aiService = this.aiServiceFactory.getAiService();
+    const isAiServiceAvailable = await aiService.initialize();
     if (!isAiServiceAvailable) {
       vscode.window.showErrorMessage("選択したAIサービスが利用できません");
       return;
     }
 
-    const availableModels = await this.aiService.getAvailableModels();
+    const availableModels = await aiService.getAvailableModels();
     this.reviewModelProvider.setupModels(availableModels);
 
     // panelが開いている場合は閉じるだけ

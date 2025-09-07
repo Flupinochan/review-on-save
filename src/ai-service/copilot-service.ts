@@ -76,7 +76,9 @@ export class CopilotService implements AiServiceInterface {
         return;
       }
 
-      vscode.window.showInformationMessage(`${model} モデルとチャット中...`);
+      vscode.window.showInformationMessage(
+        `Copilot ${model} モデルとチャット中...`,
+      );
 
       const reviewTargets = this.reviewScopeProvider
         .getCheckedItems()

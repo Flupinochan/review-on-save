@@ -96,7 +96,9 @@ export class OllamaService implements AiServiceInterface {
         return;
       }
 
-      vscode.window.showInformationMessage(`${model} モデルとチャット中...`);
+      vscode.window.showInformationMessage(
+        `Ollama ${model} モデルとチャット中...`,
+      );
 
       const reviewTargets = this.reviewScopeProvider
         .getCheckedItems()
