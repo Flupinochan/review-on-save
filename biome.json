@@ -57,6 +57,9 @@
             "noUnresolvedImports": "off",
             "useExplicitType": "off",
             "noSecrets": "off"
+          },
+          "complexity": {
+            "noExcessiveLinesPerFunction": "off"
           }
         }
       }

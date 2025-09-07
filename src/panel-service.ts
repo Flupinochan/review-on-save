@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import type { OllamaService } from "./ollama-service";
-import type { ReviewModelProvider } from "./review-model-provider";
+import type { AiServiceInterface } from "./ai-service/ai-service-interface";
 import { getNonce } from "./utils";
+import type { ReviewModelProvider } from "./view-container/review-model-provider";
 
 const CLEAR_PANEL_CONTENT = "clearPanelContent";
 const UPDATE_PANEL_CONTENT = "updatePanelContent";
@@ -12,16 +12,16 @@ const UPDATE_PANEL_CONTENT = "updatePanelContent";
 export class PanelService {
   private panel: vscode.WebviewPanel | undefined;
   private readonly context: vscode.ExtensionContext;
-  private readonly ollamaService: OllamaService;
+  private readonly aiService: AiServiceInterface;
   private readonly reviewModelProvider: ReviewModelProvider;
 
   constructor(
     context: vscode.ExtensionContext,
-    ollamaService: OllamaService,
+    aiService: AiServiceInterface,
     reviewModelProvider: ReviewModelProvider,
   ) {
     this.context = context;
-    this.ollamaService = ollamaService;
+    this.aiService = aiService;
     this.reviewModelProvider = reviewModelProvider;
   }
 
@@ -57,7 +57,6 @@ export class PanelService {
     if (!this.panel) {
       return;
     }
-    console.log("テスト");
 
     // アクティブなファイルが保存された場合
     const activeEditor = vscode.window.activeTextEditor;
@@ -67,12 +66,13 @@ export class PanelService {
       // panelをクリア
       this.panel.webview.postMessage({ command: CLEAR_PANEL_CONTENT });
 
-      // ollamaでレビューを生成
       let accumulatedContent = "";
-      const response = this.ollamaService.chatOllama(
+
+      const response = this.aiService.chat(
         fileContent,
         this.reviewModelProvider.getSelectedModel(),
       );
+
       for await (const content of response) {
         if (!this.panel) {
           break;
@@ -92,16 +92,20 @@ export class PanelService {
    * @returns
    */
   async togglePanel(): Promise<vscode.WebviewPanel | undefined> {
+    const isAiServiceAvailable = await this.aiService.initialize();
+    if (!isAiServiceAvailable) {
+      vscode.window.showErrorMessage("選択したAIサービスが利用できません");
+      return;
+    }
+
+    const availableModels = await this.aiService.getAvailableModels();
+    this.reviewModelProvider.setupModels(availableModels);
+
     // panelが開いている場合は閉じるだけ
     if (this.panel) {
       this.panel.dispose();
       return;
     }
-
-    // panelを開いたときに、ollamaの起動、modelsの表示を行う
-    await this.ollamaService.initialize();
-    const models = await this.ollamaService.getAvailableModels();
-    this.reviewModelProvider.setupModels(models);
 
     const newPanel = vscode.window.createWebviewPanel(
       "preview",

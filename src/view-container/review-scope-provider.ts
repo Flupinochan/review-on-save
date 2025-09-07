@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/suspicious/noConfusingVoidType: <VSCode公式設定のためvoid戻り値を許可> */
 
 import * as vscode from "vscode";
-import { CONFIG_NAME, getConfigurationTarget, SCOPE_SETTING } from "./utils";
+import { CONFIG_NAME, getConfigurationTarget, SCOPE_SETTING } from "../utils";
 
 /**
  * レビュー対象Item定義
