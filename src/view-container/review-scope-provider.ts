@@ -1,7 +1,14 @@
 /** biome-ignore-all lint/suspicious/noConfusingVoidType: <VSCode公式設定のためvoid戻り値を許可> */
 
 import * as vscode from "vscode";
-import { CONFIG_NAME, getConfigurationTarget, SCOPE_SETTING } from "../utils";
+import {
+  ADD_SCOPE_COMMAND,
+  CONFIG_NAME,
+  DEFAULT_SCOPES,
+  DELETE_SCOPE_COMMAND,
+  getConfigurationTarget,
+  SCOPES_VIEW_ID,
+} from "../utils";
 
 /**
  * レビュー対象Item定義
@@ -47,7 +54,7 @@ export class ReviewScopeProvider
    */
   initialize(context: vscode.ExtensionContext): void {
     // view container作成
-    const treeView = vscode.window.createTreeView("review-scope", {
+    const treeView = vscode.window.createTreeView(SCOPES_VIEW_ID, {
       treeDataProvider: this,
       canSelectMany: true,
       showCollapseAll: false,
@@ -67,7 +74,7 @@ export class ReviewScopeProvider
 
     // 削除コマンドの登録
     const deleteCommand = vscode.commands.registerCommand(
-      "delete.scope",
+      DELETE_SCOPE_COMMAND,
       (item: ReviewTargetItem) => {
         this.deleteItem(item);
       },
@@ -75,7 +82,7 @@ export class ReviewScopeProvider
 
     // 追加コマンドの登録
     const addCommand = vscode.commands.registerCommand(
-      "add.scope",
+      ADD_SCOPE_COMMAND,
       async () => {
         await this.addItem();
       },
@@ -114,7 +121,7 @@ export class ReviewScopeProvider
    */
   private loadFromConfiguration(): ReviewTargetItem[] {
     const config = vscode.workspace.getConfiguration(CONFIG_NAME);
-    const savedTargets = config.get<ReviewTargetConfig[]>(SCOPE_SETTING, []);
+    const savedTargets = config.get<ReviewTargetConfig[]>(DEFAULT_SCOPES, []);
     return savedTargets.map(
       (config) => new ReviewTargetItem(config.label, config.isSelected),
     );
@@ -132,7 +139,7 @@ export class ReviewScopeProvider
       }),
     );
     const target = getConfigurationTarget();
-    config.update(SCOPE_SETTING, targetConfigs, target);
+    config.update(DEFAULT_SCOPES, targetConfigs, target);
   }
 
   /**

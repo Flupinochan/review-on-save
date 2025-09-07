@@ -1,6 +1,12 @@
 /** biome-ignore-all lint/suspicious/noConfusingVoidType: <VSCode公式設定のためvoid戻り値を許可> */
 import * as vscode from "vscode";
-import { CONFIG_NAME, getConfigurationTarget, MODEL_SETTING } from "../utils";
+import {
+  CONFIG_NAME,
+  DEFAULT_MODEL,
+  getConfigurationTarget,
+  MODES_VIEW_ID,
+  SELECT_MODEL_COMMAND,
+} from "../utils";
 
 /**
  * Ollamaで扱うModelを選択するView Container設定クラス
@@ -11,7 +17,7 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
 
   constructor() {
     const config = vscode.workspace.getConfiguration(CONFIG_NAME);
-    const defaultModel = config.get<string>(MODEL_SETTING, "");
+    const defaultModel = config.get<string>(DEFAULT_MODEL, "");
     if (defaultModel !== "") {
       this.selected = defaultModel;
     }
@@ -52,7 +58,7 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
     );
     item.command = {
       title: "Select Model",
-      command: "model.select",
+      command: SELECT_MODEL_COMMAND,
       arguments: [element],
     };
     return item;
@@ -67,14 +73,14 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
   }
 
   /**
-   * "command": "model.select" で呼び出されるRadioButton選択時の処理
+   * "command": "select.model" で呼び出されるRadioButton選択時の処理
    * @param model
    */
   selectModel(model: string): void {
     this.selected = model;
     const config = vscode.workspace.getConfiguration(CONFIG_NAME);
     const target = getConfigurationTarget();
-    config.update(MODEL_SETTING, model, target);
+    config.update(DEFAULT_MODEL, model, target);
     this.refresh();
   }
 
@@ -96,7 +102,7 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
    */
   initialize(context: vscode.ExtensionContext) {
     // view container作成
-    const treeView = vscode.window.createTreeView("review-model", {
+    const treeView = vscode.window.createTreeView(MODES_VIEW_ID, {
       treeDataProvider: this,
       canSelectMany: false,
       showCollapseAll: false,
@@ -104,7 +110,7 @@ export class ReviewModelProvider implements vscode.TreeDataProvider<string> {
 
     // radio button設定
     const radioCommand = vscode.commands.registerCommand(
-      "model.select",
+      SELECT_MODEL_COMMAND,
       (model: string) => {
         this.selectModel(model);
       },

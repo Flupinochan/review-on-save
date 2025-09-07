@@ -1,11 +1,26 @@
-// Static Method定義ファイル
-
 import * as vscode from "vscode";
 
+/**
+ * package.jsonのcontributes.configurationのkeyと合わせる
+ * package.jsonからの設定値取得用
+ */
 export const CONFIG_NAME = "reviewOnSave";
-export const MODEL_SETTING = "model";
-export const SCOPE_SETTING = "reviewTargets";
-export const SERVICE_SETTING = "aiServiceType";
+export const DEFAULT_MODEL = "model";
+export const DEFAULT_SCOPES = "scopes";
+export const DEFAULT_SERVICE_TYPE = "aiServiceType";
+export const OLLAMA_ENDPOINT = "ollamaEndpoint";
+
+// contributes.viewsのidと合わせる
+export const MODES_VIEW_ID = "models-view";
+export const SCOPES_VIEW_ID = "scopes-view";
+export const SERVICES_VIEW_ID = "services-view";
+
+// contributes.commandsのcommandと合わせる
+export const SELECT_MODEL_COMMAND = "select.model";
+export const SELECT_SERVICE_COMMAND = "select.service";
+export const PREVIEW_COMMAND = "preview.panel";
+export const ADD_SCOPE_COMMAND = "add.scope";
+export const DELETE_SCOPE_COMMAND = "delete.scope";
 
 /**
  * HTML (WebView) にJavaScriptの挿入を安全にするため
@@ -28,7 +43,7 @@ export function getNonce(): string {
  */
 export function getConfigurationTarget(): vscode.ConfigurationTarget {
   const config = vscode.workspace.getConfiguration(CONFIG_NAME);
-  const inspection = config.inspect<string>(MODEL_SETTING);
+  const inspection = config.inspect<string>(DEFAULT_MODEL);
 
   if (inspection) {
     if (inspection.workspaceValue !== undefined) {
