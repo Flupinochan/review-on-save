@@ -1,5 +1,5 @@
 import type * as vscode from "vscode";
-import { createAiServiceFromConfig } from "./ai-service/ai-service-factory";
+import { AiServiceFactory } from "./ai-service/ai-service-factory";
 import { PanelService } from "./panel-service";
 import { ReviewModelProvider } from "./view-container/review-model-provider";
 import { ReviewScopeProvider } from "./view-container/review-scope-provider";
@@ -11,27 +11,29 @@ import { ReviewServiceProvider } from "./view-container/review-service-provider"
  * @param context
  */
 export function activate(context: vscode.ExtensionContext): void {
-  // Model View Container
-  const reviewModelProvider = new ReviewModelProvider();
-  reviewModelProvider.initialize(context);
-
   // Scope View Container
   const reviewScopeProvider = new ReviewScopeProvider();
   reviewScopeProvider.initialize(context);
 
-  // Service View Container
-  const reviewServiceProvider = new ReviewServiceProvider();
-  reviewServiceProvider.initialize(context);
+  // Model View Container
+  const reviewModelProvider = new ReviewModelProvider();
+  reviewModelProvider.initialize(context);
 
   // AI Service
-  const aiService = createAiServiceFromConfig(reviewScopeProvider);
+  const aiServiceFactory = new AiServiceFactory(reviewScopeProvider);
+
+  // AI Service View Container
+  const reviewServiceProvider = new ReviewServiceProvider(
+    aiServiceFactory,
+    reviewModelProvider,
+  );
+  reviewServiceProvider.initialize(context);
 
   // Panel (Web View)
   const panelService = new PanelService(
     context,
-    aiService,
+    aiServiceFactory.getAiService(),
     reviewModelProvider,
-    reviewScopeProvider,
   );
   panelService.initialize();
 }

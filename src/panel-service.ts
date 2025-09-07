@@ -1,9 +1,7 @@
 import * as vscode from "vscode";
-import { createAiServiceFromConfig } from "./ai-service/ai-service-factory";
 import type { AiServiceInterface } from "./ai-service/ai-service-interface";
 import { getNonce } from "./utils";
 import type { ReviewModelProvider } from "./view-container/review-model-provider";
-import type { ReviewScopeProvider } from "./view-container/review-scope-provider";
 
 const CLEAR_PANEL_CONTENT = "clearPanelContent";
 const UPDATE_PANEL_CONTENT = "updatePanelContent";
@@ -14,20 +12,17 @@ const UPDATE_PANEL_CONTENT = "updatePanelContent";
 export class PanelService {
   private panel: vscode.WebviewPanel | undefined;
   private readonly context: vscode.ExtensionContext;
-  private aiService: AiServiceInterface;
+  private readonly aiService: AiServiceInterface;
   private readonly reviewModelProvider: ReviewModelProvider;
-  private readonly reviewScopeProvider: ReviewScopeProvider;
 
   constructor(
     context: vscode.ExtensionContext,
     aiService: AiServiceInterface,
     reviewModelProvider: ReviewModelProvider,
-    reviewScopeProvider: ReviewScopeProvider,
   ) {
     this.context = context;
     this.aiService = aiService;
     this.reviewModelProvider = reviewModelProvider;
-    this.reviewScopeProvider = reviewScopeProvider;
   }
 
   /**
@@ -97,8 +92,6 @@ export class PanelService {
    * @returns
    */
   async togglePanel(): Promise<vscode.WebviewPanel | undefined> {
-    this.aiService = createAiServiceFromConfig(this.reviewScopeProvider);
-
     const isAiServiceAvailable = await this.aiService.initialize();
     if (!isAiServiceAvailable) {
       vscode.window.showErrorMessage("選択したAIサービスが利用できません");

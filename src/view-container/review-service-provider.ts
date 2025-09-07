@@ -1,15 +1,27 @@
 /** biome-ignore-all lint/suspicious/noConfusingVoidType: <VSCode公式設定のためvoid戻り値を許可> */
 import * as vscode from "vscode";
-import type { AiServiceType } from "../ai-service/ai-service-factory";
+import type {
+  AiServiceFactory,
+  AiServiceType,
+} from "../ai-service/ai-service-factory";
 import { CONFIG_NAME, getConfigurationTarget, SERVICE_SETTING } from "../utils";
+import type { ReviewModelProvider } from "./review-model-provider";
 
 export class ReviewServiceProvider
   implements vscode.TreeDataProvider<AiServiceType>
 {
-  private selected = "";
+  private selected: AiServiceType = "copilot";
   private services: AiServiceType[] = ["copilot", "ollama"];
+  private readonly aiServiceFactory: AiServiceFactory;
+  private readonly reviewModelProvider: ReviewModelProvider;
 
-  constructor() {
+  constructor(
+    aiServiceFactory: AiServiceFactory,
+    reviewModelProvider: ReviewModelProvider,
+  ) {
+    this.aiServiceFactory = aiServiceFactory;
+    this.reviewModelProvider = reviewModelProvider;
+
     const config = vscode.workspace.getConfiguration(CONFIG_NAME);
     const defaultService = config.get<AiServiceType>(
       SERVICE_SETTING,
@@ -28,7 +40,7 @@ export class ReviewServiceProvider
     AiServiceType | undefined | null | void
   > = this._onDidChangeTreeData.event;
 
-  getSelectedService(): string {
+  getSelectedService(): AiServiceType {
     return this.selected;
   }
 
@@ -36,7 +48,7 @@ export class ReviewServiceProvider
     this._onDidChangeTreeData.fire();
   }
 
-  getTreeItem(element: string): vscode.TreeItem {
+  getTreeItem(element: AiServiceType): vscode.TreeItem {
     const item = new vscode.TreeItem(element);
     item.iconPath = new vscode.ThemeIcon(
       element === this.selected ? "circle-filled" : "circle-outline",
@@ -53,17 +65,26 @@ export class ReviewServiceProvider
     return Promise.resolve(this.services);
   }
 
-  selectService(service: string): void {
+  async selectService(service: AiServiceType): Promise<void> {
     this.selected = service;
     const config = vscode.workspace.getConfiguration(CONFIG_NAME);
     const target = getConfigurationTarget();
     config.update(SERVICE_SETTING, service, target);
+
+    // 選択したサービスに合わせてAiServiceを切り替え
+    this.aiServiceFactory.switchAiService(this.selected);
+    const aiService = this.aiServiceFactory.getAiService();
+    const models = await aiService.getAvailableModels();
+
+    // 選択したサービスに合わせてModel一覧を更新
+    this.reviewModelProvider.setupModels(models);
+
     this.refresh();
   }
 
   setupServices(services: AiServiceType[]) {
     this.services = services;
-    if (this.selected === "" && this.services.length > 0) {
+    if (this.services.length > 0) {
       this.selected = this.services[0];
     }
     this.refresh();
@@ -80,8 +101,8 @@ export class ReviewServiceProvider
     // radio button設定
     const radioCommand = vscode.commands.registerCommand(
       "service.select",
-      (service: string) => {
-        this.selectService(service);
+      async (service: AiServiceType) => {
+        await this.selectService(service);
       },
     );
 
