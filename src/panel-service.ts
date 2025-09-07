@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
-import type { CopilotService } from "./copilot-service";
-import type { OllamaService } from "./ollama-service";
-import type { ReviewModelProvider } from "./review-model-provider";
+import { createAiServiceFromConfig } from "./ai-service/ai-service-factory";
+import type { AiServiceInterface } from "./ai-service/ai-service-interface";
 import { getNonce } from "./utils";
+import type { ReviewModelProvider } from "./view-container/review-model-provider";
+import type { ReviewScopeProvider } from "./view-container/review-scope-provider";
 
 const CLEAR_PANEL_CONTENT = "clearPanelContent";
 const UPDATE_PANEL_CONTENT = "updatePanelContent";
@@ -13,20 +14,20 @@ const UPDATE_PANEL_CONTENT = "updatePanelContent";
 export class PanelService {
   private panel: vscode.WebviewPanel | undefined;
   private readonly context: vscode.ExtensionContext;
-  private readonly ollamaService: OllamaService;
-  private readonly copilotService: CopilotService;
+  private aiService: AiServiceInterface;
   private readonly reviewModelProvider: ReviewModelProvider;
+  private readonly reviewScopeProvider: ReviewScopeProvider;
 
   constructor(
     context: vscode.ExtensionContext,
-    ollamaService: OllamaService,
-    copilotService: CopilotService,
+    aiService: AiServiceInterface,
     reviewModelProvider: ReviewModelProvider,
+    reviewScopeProvider: ReviewScopeProvider,
   ) {
     this.context = context;
-    this.ollamaService = ollamaService;
-    this.copilotService = copilotService;
+    this.aiService = aiService;
     this.reviewModelProvider = reviewModelProvider;
+    this.reviewScopeProvider = reviewScopeProvider;
   }
 
   /**
@@ -72,14 +73,7 @@ export class PanelService {
 
       let accumulatedContent = "";
 
-      // // ollamaでレビューを生成
-      // const response = this.ollamaService.chatOllama(
-      //   fileContent,
-      //   this.reviewModelProvider.getSelectedModel(),
-      // );
-
-      // copilotでレビューを生成
-      const response = this.copilotService.chatCopilot(
+      const response = this.aiService.chat(
         fileContent,
         this.reviewModelProvider.getSelectedModel(),
       );
@@ -103,13 +97,15 @@ export class PanelService {
    * @returns
    */
   async togglePanel(): Promise<vscode.WebviewPanel | undefined> {
-    const isCopilotAvailable = await this.copilotService.initialize();
-    if (!isCopilotAvailable) {
-      vscode.window.showErrorMessage("GitHub Copilotが利用できません");
+    this.aiService = createAiServiceFromConfig(this.reviewScopeProvider);
+
+    const isAiServiceAvailable = await this.aiService.initialize();
+    if (!isAiServiceAvailable) {
+      vscode.window.showErrorMessage("選択したAIサービスが利用できません");
       return;
     }
 
-    const availableModels = await this.copilotService.getAvailableModelIds();
+    const availableModels = await this.aiService.getAvailableModels();
     this.reviewModelProvider.setupModels(availableModels);
 
     // panelが開いている場合は閉じるだけ
@@ -117,12 +113,6 @@ export class PanelService {
       this.panel.dispose();
       return;
     }
-
-    // // ollama初期化
-    // // panelを開いたときに、ollamaの起動、modelsの表示を行う
-    // await this.ollamaService.initialize();
-    // const models = await this.ollamaService.getAvailableModels();
-    // this.reviewModelProvider.setupModels(models);
 
     const newPanel = vscode.window.createWebviewPanel(
       "preview",

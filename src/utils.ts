@@ -5,6 +5,7 @@ import * as vscode from "vscode";
 export const CONFIG_NAME = "reviewOnSave";
 export const MODEL_SETTING = "model";
 export const SCOPE_SETTING = "reviewTargets";
+export const SERVICE_SETTING = "aiServiceType";
 
 /**
  * HTML (WebView) にJavaScriptの挿入を安全にするため

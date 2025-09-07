@@ -1,9 +1,10 @@
 import * as vscode from "vscode";
-import type { ReviewScopeProvider } from "./review-scope-provider";
+import type { ReviewScopeProvider } from "../view-container/review-scope-provider";
+import type { AiServiceInterface } from "./ai-service-interface";
 
 type ProviderId = "github" | "microsoft";
 
-export class CopilotService {
+export class CopilotService implements AiServiceInterface {
   private readonly reviewScopeProvider: ReviewScopeProvider;
   private readonly providerId: ProviderId;
   private isProcessing = false;
@@ -28,7 +29,7 @@ export class CopilotService {
       return false;
     }
 
-    const availableModels = await this.getAvailableModelIds();
+    const availableModels = await this.getAvailableModels();
     if (availableModels.length === 0) {
       return false;
     }
@@ -40,7 +41,7 @@ export class CopilotService {
    * 利用可能なLanguage Modelを取得
    * @returns
    */
-  async getAvailableModelIds(): Promise<string[]> {
+  async getAvailableModels(): Promise<string[]> {
     const availableModels = await vscode.lm.selectChatModels();
     if (availableModels.length === 0) {
       vscode.window.showErrorMessage(
@@ -48,43 +49,7 @@ export class CopilotService {
       );
       return [];
     }
-    return availableModels.map((model) => model.id);
-  }
-
-  /**
-   * GitHub認証チェック
-   * 認証されていない場合は認証ダイアログが表示され、認証エラー時はエラーがスローされる
-   * @returns
-   */
-  async checkCopilotAuth(): Promise<boolean> {
-    try {
-      await vscode.authentication.getSession(this.providerId, [], {
-        createIfNone: true,
-      });
-      return true;
-    } catch (error) {
-      vscode.window.showErrorMessage(`認証に失敗しました: ${error}`);
-      return false;
-    }
-  }
-
-  /**
-   * Language Model APIの利用にはCopilot拡張機能が必要
-   * @returns
-   */
-  async checkCopilotExtension(): Promise<boolean> {
-    const extensionId = "github.copilot";
-    const extension = vscode.extensions.getExtension(extensionId);
-
-    if (!extension) {
-      vscode.window.showErrorMessage(
-        "GitHub Copilot拡張機能がインストールされていません。インストールをしてください",
-      );
-      await vscode.commands.executeCommand("extension.open", extensionId);
-      return false;
-    }
-
-    return true;
+    return availableModels.map((model) => model.id).sort();
   }
 
   /**
@@ -92,7 +57,7 @@ export class CopilotService {
    * @param fileContent
    * @returns Streaming Response
    */
-  async *chatCopilot(
+  async *chat(
     fileContent: string,
     model: string,
   ): AsyncGenerator<string, void, unknown> {
@@ -103,7 +68,7 @@ export class CopilotService {
 
     try {
       // Modelが利用可能かどうかでチャット可能か判断
-      const models = await this.getAvailableModelIds();
+      const models = await this.getAvailableModels();
       if (!models.includes(model)) {
         vscode.window.showErrorMessage(
           `選択された ${model} モデルは利用できません`,
@@ -154,12 +119,48 @@ ${fileContent}
   }
 
   /**
+   * GitHub認証チェック
+   * 認証されていない場合は認証ダイアログが表示され、認証エラー時はエラーがスローされる
+   * @returns
+   */
+  private async checkCopilotAuth(): Promise<boolean> {
+    try {
+      await vscode.authentication.getSession(this.providerId, [], {
+        createIfNone: true,
+      });
+      return true;
+    } catch (error) {
+      vscode.window.showErrorMessage(`認証に失敗しました: ${error}`);
+      return false;
+    }
+  }
+
+  /**
+   * Language Model APIの利用にはCopilot拡張機能が必要
+   * @returns
+   */
+  private async checkCopilotExtension(): Promise<boolean> {
+    const extensionId = "github.copilot";
+    const extension = vscode.extensions.getExtension(extensionId);
+
+    if (!extension) {
+      vscode.window.showErrorMessage(
+        "GitHub Copilot拡張機能がインストールされていません。インストールをしてください",
+      );
+      await vscode.commands.executeCommand("extension.open", extensionId);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * ModelIdからモデル情報を取得
    * Ollamaと違い、CopilotはModelObjectが必要
    * @param modelId
    * @returns
    */
-  async getModelById(
+  private async getModelById(
     modelId: string,
   ): Promise<vscode.LanguageModelChat | null> {
     const allModels = await vscode.lm.selectChatModels();

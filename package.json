@@ -35,6 +35,10 @@
         "title": "Select Model"
       },
       {
+        "command": "service.select",
+        "title": "Select Service"
+      },
+      {
         "command": "add.scope",
         "title": "Add Scope",
         "icon": "$(add)"
@@ -88,6 +92,11 @@
           "id": "review-model",
           "name": "Model",
           "icon": "$(sparkle)"
+        },
+        {
+          "id": "review-service",
+          "name": "Service",
+          "icon": "$(sparkle)"
         }
       ]
     },
@@ -103,6 +112,19 @@
           "type": "string",
           "default": "http://localhost:11434",
           "description": "Enter your Ollama API endpoint."
+        },
+        "reviewOnSave.aiServiceType": {
+          "type": "string",
+          "enum": [
+            "copilot",
+            "ollama"
+          ],
+          "enumDescriptions": [
+            "Use GitHub Copilot for code review",
+            "Use Ollama for code review"
+          ],
+          "default": "copilot",
+          "description": "Select the AI service to use for code review"
         },
         "reviewOnSave.reviewTargets": {
           "type": "array",

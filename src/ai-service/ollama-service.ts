@@ -3,15 +3,16 @@ import process from "node:process";
 import { promisify } from "node:util";
 import ollama from "ollama";
 import * as vscode from "vscode";
-import type { ReviewScopeProvider } from "./review-scope-provider";
-import { CONFIG_NAME } from "./utils";
+import { CONFIG_NAME } from "../utils";
+import type { ReviewScopeProvider } from "../view-container/review-scope-provider";
+import type { AiServiceInterface } from "./ai-service-interface";
 
 const OLLAMA_ENDPOINT = "apiEndpoint";
 
 /**
  * Ollamaに関する機能を定義
  */
-export class OllamaService {
+export class OllamaService implements AiServiceInterface {
   private readonly reviewScopeProvider: ReviewScopeProvider;
   private readonly execAsync = promisify(exec);
   private readonly ollamaEndpoint: string;
@@ -27,56 +28,6 @@ export class OllamaService {
       OLLAMA_ENDPOINT,
       "http://localhost:11434",
     );
-  }
-
-  /**
-   * Ollamaの起動状態を確認
-   * @returns
-   */
-  async checkOllamaStarted(): Promise<boolean> {
-    try {
-      const response = await fetch(this.ollamaEndpoint);
-      if (!response.ok) {
-        throw new Error("Ollama is not started");
-      }
-      return true;
-    } catch (_error) {
-      vscode.window.showErrorMessage("Ollamaが起動していません");
-      return false;
-    }
-  }
-
-  /**
-   * Ollamaのインストール状態を確認
-   * @returns
-   */
-  async checkOllamaInstalled(): Promise<boolean> {
-    try {
-      const ollamaCommand = "ollama";
-      const platform = process.platform;
-      const checkCommand =
-        platform === "win32"
-          ? `where ${ollamaCommand}`
-          : `which ${ollamaCommand}`;
-      await this.execAsync(checkCommand);
-      return true;
-    } catch (_error) {
-      vscode.window.showErrorMessage("Ollamaがインストールされていません");
-      vscode.window.showErrorMessage(
-        `${this.ollamaDownloadUrl} からOllamaをインストールしてください`,
-      );
-      return false;
-    }
-  }
-
-  /**
-   * terminalでOllamaを起動
-   */
-  startOllama(): void {
-    const ollamaStartCommand = "ollama serve";
-    const terminal = vscode.window.createTerminal("Ollama Server");
-    terminal.sendText(ollamaStartCommand);
-    terminal.show();
   }
 
   /**
@@ -113,11 +64,20 @@ export class OllamaService {
   }
 
   /**
+   * Ollamaで利用可能な生成AI Modelを取得
+   * @returns
+   */
+  async getAvailableModels(): Promise<string[]> {
+    const response = await ollama.list();
+    return response.models.map((model) => model.name).sort();
+  }
+
+  /**
    * Ollamaでチャットする
    * @param fileContent
    * @returns Streaming Response
    */
-  async *chatOllama(
+  async *chat(
     fileContent: string,
     model: string,
   ): AsyncGenerator<string, void, unknown> {
@@ -188,11 +148,52 @@ ${fileContent}
   }
 
   /**
-   * Ollamaで利用可能な生成AI Modelを取得
+   * Ollamaの起動状態を確認
    * @returns
    */
-  async getAvailableModels(): Promise<string[]> {
-    const response = await ollama.list();
-    return response.models.map((model) => model.name);
+  private async checkOllamaStarted(): Promise<boolean> {
+    try {
+      const response = await fetch(this.ollamaEndpoint);
+      if (!response.ok) {
+        throw new Error("Ollama is not started");
+      }
+      return true;
+    } catch (_error) {
+      vscode.window.showErrorMessage("Ollamaが起動していません");
+      return false;
+    }
+  }
+
+  /**
+   * Ollamaのインストール状態を確認
+   * @returns
+   */
+  private async checkOllamaInstalled(): Promise<boolean> {
+    try {
+      const ollamaCommand = "ollama";
+      const platform = process.platform;
+      const checkCommand =
+        platform === "win32"
+          ? `where ${ollamaCommand}`
+          : `which ${ollamaCommand}`;
+      await this.execAsync(checkCommand);
+      return true;
+    } catch (_error) {
+      vscode.window.showErrorMessage("Ollamaがインストールされていません");
+      vscode.window.showErrorMessage(
+        `${this.ollamaDownloadUrl} からOllamaをインストールしてください`,
+      );
+      return false;
+    }
+  }
+
+  /**
+   * terminalでOllamaを起動
+   */
+  private startOllama(): void {
+    const ollamaStartCommand = "ollama serve";
+    const terminal = vscode.window.createTerminal("Ollama Server");
+    terminal.sendText(ollamaStartCommand);
+    terminal.show();
   }
 }

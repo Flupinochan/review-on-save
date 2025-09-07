@@ -1,9 +1,9 @@
 import type * as vscode from "vscode";
-import { CopilotService } from "./copilot-service";
-import { OllamaService } from "./ollama-service";
+import { createAiServiceFromConfig } from "./ai-service/ai-service-factory";
 import { PanelService } from "./panel-service";
-import { ReviewModelProvider } from "./review-model-provider";
-import { ReviewScopeProvider } from "./review-scope-provider";
+import { ReviewModelProvider } from "./view-container/review-model-provider";
+import { ReviewScopeProvider } from "./view-container/review-scope-provider";
+import { ReviewServiceProvider } from "./view-container/review-service-provider";
 
 /**
  * 拡張機能アクティベート時初期化処理
@@ -19,18 +19,19 @@ export function activate(context: vscode.ExtensionContext): void {
   const reviewScopeProvider = new ReviewScopeProvider();
   reviewScopeProvider.initialize(context);
 
-  // Ollama
-  const ollamaService = new OllamaService(reviewScopeProvider);
+  // Service View Container
+  const reviewServiceProvider = new ReviewServiceProvider();
+  reviewServiceProvider.initialize(context);
 
-  // Copilot
-  const copilotService = new CopilotService(reviewScopeProvider);
+  // AI Service
+  const aiService = createAiServiceFromConfig(reviewScopeProvider);
 
-  // Panel(Web View)
+  // Panel (Web View)
   const panelService = new PanelService(
     context,
-    ollamaService,
-    copilotService,
+    aiService,
     reviewModelProvider,
+    reviewScopeProvider,
   );
   panelService.initialize();
 }
