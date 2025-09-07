@@ -1,4 +1,5 @@
 import type * as vscode from "vscode";
+import { CopilotService } from "./copilot-service";
 import { OllamaService } from "./ollama-service";
 import { PanelService } from "./panel-service";
 import { ReviewModelProvider } from "./review-model-provider";
@@ -21,10 +22,14 @@ export function activate(context: vscode.ExtensionContext): void {
   // Ollama
   const ollamaService = new OllamaService(reviewScopeProvider);
 
+  // Copilot
+  const copilotService = new CopilotService(reviewScopeProvider);
+
   // Panel(Web View)
   const panelService = new PanelService(
     context,
     ollamaService,
+    copilotService,
     reviewModelProvider,
   );
   panelService.initialize();

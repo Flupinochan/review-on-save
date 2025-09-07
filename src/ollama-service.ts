@@ -127,6 +127,7 @@ export class OllamaService {
     }
 
     try {
+      // Modelが利用可能かどうかでチャット可能か判断
       const models = await this.getAvailableModels();
       if (!models.includes(model)) {
         vscode.window.showErrorMessage(

@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import type { CopilotService } from "./copilot-service";
 import type { OllamaService } from "./ollama-service";
 import type { ReviewModelProvider } from "./review-model-provider";
 import { getNonce } from "./utils";
@@ -13,15 +14,18 @@ export class PanelService {
   private panel: vscode.WebviewPanel | undefined;
   private readonly context: vscode.ExtensionContext;
   private readonly ollamaService: OllamaService;
+  private readonly copilotService: CopilotService;
   private readonly reviewModelProvider: ReviewModelProvider;
 
   constructor(
     context: vscode.ExtensionContext,
     ollamaService: OllamaService,
+    copilotService: CopilotService,
     reviewModelProvider: ReviewModelProvider,
   ) {
     this.context = context;
     this.ollamaService = ollamaService;
+    this.copilotService = copilotService;
     this.reviewModelProvider = reviewModelProvider;
   }
 
@@ -57,7 +61,6 @@ export class PanelService {
     if (!this.panel) {
       return;
     }
-    console.log("テスト");
 
     // アクティブなファイルが保存された場合
     const activeEditor = vscode.window.activeTextEditor;
@@ -67,12 +70,20 @@ export class PanelService {
       // panelをクリア
       this.panel.webview.postMessage({ command: CLEAR_PANEL_CONTENT });
 
-      // ollamaでレビューを生成
       let accumulatedContent = "";
-      const response = this.ollamaService.chatOllama(
+
+      // // ollamaでレビューを生成
+      // const response = this.ollamaService.chatOllama(
+      //   fileContent,
+      //   this.reviewModelProvider.getSelectedModel(),
+      // );
+
+      // copilotでレビューを生成
+      const response = this.copilotService.chatCopilot(
         fileContent,
         this.reviewModelProvider.getSelectedModel(),
       );
+
       for await (const content of response) {
         if (!this.panel) {
           break;
@@ -92,16 +103,26 @@ export class PanelService {
    * @returns
    */
   async togglePanel(): Promise<vscode.WebviewPanel | undefined> {
+    const isCopilotAvailable = await this.copilotService.initialize();
+    if (!isCopilotAvailable) {
+      vscode.window.showErrorMessage("GitHub Copilotが利用できません");
+      return;
+    }
+
+    const availableModels = await this.copilotService.getAvailableModelIds();
+    this.reviewModelProvider.setupModels(availableModels);
+
     // panelが開いている場合は閉じるだけ
     if (this.panel) {
       this.panel.dispose();
       return;
     }
 
-    // panelを開いたときに、ollamaの起動、modelsの表示を行う
-    await this.ollamaService.initialize();
-    const models = await this.ollamaService.getAvailableModels();
-    this.reviewModelProvider.setupModels(models);
+    // // ollama初期化
+    // // panelを開いたときに、ollamaの起動、modelsの表示を行う
+    // await this.ollamaService.initialize();
+    // const models = await this.ollamaService.getAvailableModels();
+    // this.reviewModelProvider.setupModels(models);
 
     const newPanel = vscode.window.createWebviewPanel(
       "preview",
